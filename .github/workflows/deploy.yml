@@ -24,6 +24,9 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: 22
         script: |
+          # 1. Git ko automatic batayein ki yeh directory safe hai (Dubious ownership fix)
+          git config --global --add safe.directory ${{ secrets.PROJECT_PATH }}
+
           # 1. Apne project folder ke andar jayein
           cd ${{ secrets.PROJECT_PATH }}
           

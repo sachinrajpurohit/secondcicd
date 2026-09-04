@@ -7,7 +7,7 @@ app.use(cors());
 app.use(express.json());
 
 // Docker Compose ka MONGO_URI environment variable read karega
-const mongoURI = process.env.MONGO_URI || 'mongodb://localhost:27017/todoDB';
+const mongoURI = process.env.MONGO_URI || 'mongodb://mongodb:27017/todoDB';
 
 mongoose.connect(mongoURI)
   .then(() => console.log('MongoDB Connected Successfully!'))

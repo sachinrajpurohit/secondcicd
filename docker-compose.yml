@@ -8,6 +8,8 @@ services:
       - "27017:27017"
     volumes:
       - mongo-data:/data/db
+    networks: 
+      - mynet 
 
   backend:
     build: ./backend
@@ -17,7 +19,9 @@ services:
     environment:
       - MONGO_URI=mongodb://mongodb:27017/todoDB
     depends_on:
-      - mongodb      
+      - mongodb
+    networks:
+      - mynet
 
   frontend:
     build: ./frontend
@@ -26,6 +30,13 @@ services:
       - "3000:80"
       
     depends_on:
-      - backend  
+      - backend
+    networks:
+      - mynet
+  
 volumes:
-  mongo-data:        
+  mongo-data:
+
+networks:
+  mynet:
+    driver: bridge

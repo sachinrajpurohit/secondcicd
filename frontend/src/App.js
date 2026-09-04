@@ -5,7 +5,7 @@ function App() {
   const [input, setInput] = useState('');
   
   // Docker Compose wala URL use hoga, fallback local host par hai
-  const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5001';
+  const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://15.252.107.186:5001';
 
   useEffect(() => {
     fetch(`${API_URL}/api/todos`)
@@ -30,7 +30,7 @@ function App() {
 
   return (
     <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
-      <h2>Dockerized MERN Todo App</h2>
+      <h2>Dooooockerized MERN Todo App</h2>
       <form onSubmit={addTodo}>
         <input value={input} onChange={e => setInput(e.target.value)} placeholder="New Task..." />
         <button type="submit">Add</button>
