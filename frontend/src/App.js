@@ -30,7 +30,7 @@ function App() {
 
   return (
     <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
-      <h2>Dooooockerized MERN Todo App</h2>
+      <h2>dooooockerized MERN Todo App</h2>
       <form onSubmit={addTodo}>
         <input value={input} onChange={e => setInput(e.target.value)} placeholder="New Task..." />
         <button type="submit">Add</button>
