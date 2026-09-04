@@ -1,21 +1,18 @@
 name: CI/CD Deploy to Cloud
 
-# 1. Pipeline kab chalegi: Jab aap main branch par code push karenge
 on:
   push:
     branches:
-      - main  # 💡 Agar aapki branch ka naam 'master' hai, toh yahan master likhein
+      - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-    # Step 1: GitHub repository se latest code uthayega
     - name: Checkout Code
       uses: actions/checkout@v4
 
-    # Step 2: Cloud Server par SSH ke zariye login karke commands chalayega
     - name: Deploying via SSH to AWS Cloud
       uses: appleboy/ssh-action@v1.0.3
       with:
@@ -24,22 +21,23 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: 22
         script: |
-
-          # 1. Sabse pehle poore folder ki permission 'ubuntu' user ko wapas dilayein (FETCH_HEAD fix)
+          # 1. Poore folder ki permission user ko dilaao (Zaroori hai)
           sudo chown -R $USER:$USER ${{ secrets.PROJECT_PATH }}
           
-          # 1. Git ko automatic batayein ki yeh directory safe hai (Dubious ownership fix)
+          # 2. Git safe directory set karo
           git config --global --add safe.directory ${{ secrets.PROJECT_PATH }}
-
-          # 1. Apne project folder ke andar jayein
+          
+          # 3. Project folder ke andar jao
           cd ${{ secrets.PROJECT_PATH }}
           
-          # 2. GitHub se naya code server par pull karein
-          git pull origin main
+          # 4. GitHub se sabse naya data fetch karo bina merge kiye
+          git fetch origin main
           
-          # 3. Naye code ke saath Docker containers ko rebuild aur restart karein
-          docker-compose up --build -d
+          # 5. 🔥 Server par kiye gaye saare manual badlavo ko dho dalo aur GitHub wala code force apply karo
+          git reset --hard origin/main
           
-          # 4. Unused/crashed images ko delete karein taaki server ki disk memory na bhare
-          docker image prune -f
-
+          # 6. 💡 Sudo ke sath Docker Compose bina dash ke chalayein
+          sudo docker compose up --build -d
+          
+          # 7. Sudo ke sath faltu cache images clean karein
+          sudo docker image prune -f
