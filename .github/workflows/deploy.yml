@@ -24,6 +24,10 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: 22
         script: |
+
+          # 1. Sabse pehle poore folder ki permission 'ubuntu' user ko wapas dilayein (FETCH_HEAD fix)
+          sudo chown -R $USER:$USER ${{ secrets.PROJECT_PATH }}
+          
           # 1. Git ko automatic batayein ki yeh directory safe hai (Dubious ownership fix)
           git config --global --add safe.directory ${{ secrets.PROJECT_PATH }}
 
