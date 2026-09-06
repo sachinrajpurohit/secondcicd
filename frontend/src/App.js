@@ -5,7 +5,7 @@ function App() {
   const [input, setInput] = useState('');
   
   // Docker Compose wala URL use hoga, fallback local host par hai
-  const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://15.252.107.186:5001';
+  const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://65.2.5.89:5001';
 
   useEffect(() => {
     fetch(`${API_URL}/api/todos`)
