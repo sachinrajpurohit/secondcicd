@@ -1,56 +1,59 @@
-name: Simple MERN Deploy to AWS
+name: CI/CD Pipeline
 
 on:
   push:
-    branches:
-      - main  # Jab aap main branch par push karenge tab deploy hoga
+    branches: [ "main" ]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Deploy to AWS EC2 via SSH
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.AWS_HOST }}
-        username: ubuntu
-        key: ${{ secrets.AWS_PRIVATE_KEY }}
-        script: |
-          # 1. System packages update karein
-          sudo apt-get update -y
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-          # 2. Agar Docker installed nahi hai, toh install karein
+    - name: Deploy to AWS EC2
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          # 1. Check if Docker is installed, if not, install it automatically
           if ! command -v docker &> /dev/null; then
-            echo "Installing Docker..."
-            sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
-            curl -fsSL https://docker.com | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-            echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://docker.com $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+            echo "Docker not found. Installing Docker automatically..."
             sudo apt-get update -y
-            sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+            sudo apt-get install -y docker.io
+            sudo systemctl start docker
+            sudo systemctl enable docker
             sudo usermod -aG docker ubuntu
           fi
 
-          # 3. Agar Docker Compose (V2 plugin) installed nahi hai, toh install karein
-          if ! docker compose version &> /dev/null; then
-            echo "Installing Docker Compose Plugin..."
-            sudo apt-get install -y docker-compose-plugin
-          fi
+          # 2. Setup project directory and fix git permissions
+          sudo mkdir -p /home/ubuntu/dockerproject
+          sudo chown -R ubuntu:ubuntu /home/ubuntu/dockerproject
+          cd /home/ubuntu/dockerproject
 
-          # 4. Folder banayein aur code clone ya pull karein
-          mkdir -p ~/app
-          cd ~/app
-
+          # 3. Handle initial Git setup if directory is empty (Using GITHUB_TOKEN dynamically)
           if [ ! -d ".git" ]; then
-            echo "Cloning repository for the first time..."
-            git clone https://${{ secrets.GH_PAT }}@://github.com{{ github.repository }}.git .
+            git init
+            git remote add origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/sachinrajpurohit/firstcicd.git
           else
-            echo "Pulling latest code changes..."
-            git pull origin main
+            # Remote URL ko update karein taaki har baar fresh temporary token use ho sake
+            git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/sachinrajpurohit/firstcicd.git
           fi
 
-          # 5. Purane chal rahe containers ko stop karein aur naye build karke run karein
-          echo "Building and launching containers..."
-          sudo docker compose down
-          sudo docker compose up -d --build
+          # 4. Fix Git safe directory configuration dynamically
+          git config --global --add safe.directory /home/ubuntu/dockerproject
+
+          # 5. Fetch code and deploy app using Docker
+          git fetch origin main
+          git reset --hard origin/main
+
+          # Force refresh group permissions for the current script session
+          sg docker -c "
+            docker build -t firstjava:latest .
+            docker rm -f firstjavacontainer || true
+            docker run -d -p 5000:5000 --name firstjavacontainer firstjava:latest
+          "
 
