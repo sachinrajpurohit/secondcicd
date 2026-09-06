@@ -1,40 +1,56 @@
-name: CI/CD Deploy to Cloud
+name: Simple MERN Deploy to AWS
 
 on:
   push:
     branches:
-      - main
+      - main  # Jab aap main branch par push karenge tab deploy hoga
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
-
-    - name: Deploying via SSH to AWS Cloud
+    - name: Deploy to AWS EC2 via SSH
       uses: appleboy/ssh-action@v1.0.3
       with:
-        host: ${{ secrets.SERVER_IP }}
-        username: ${{ secrets.SERVER_USER }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        port: 22
+        host: ${{ secrets.AWS_HOST }}
+        username: ubuntu
+        key: ${{ secrets.AWS_PRIVATE_KEY }}
         script: |
-          # 1. Sabse pehle poore folder ki permission 'ubuntu' user ko wapas dilayein (FETCH_HEAD fix)
-          sudo chown -R $USER:$USER ${{ secrets.PROJECT_PATH }}
-          
-          # 2. Git ko automatic batayein ki yeh directory safe hai
-          git config --global --add safe.directory ${{ secrets.PROJECT_PATH }}
-          
-          # 3. Project folder ke andar jayein
-          cd ${{ secrets.PROJECT_PATH }}
-          
-          # 4. Git code pull karein (Ab permission issue nahi aayega)
-          git pull origin main
-          
-          # 5. 💡 Sudo ke sath naya Docker Compose bina dash ke chalayein
-          sudo docker compose up --build -d
-          
-          # 6. Sudo ke sath unused images ko clean karein
-          sudo docker image prune -f
+          # 1. System packages update karein
+          sudo apt-get update -y
+
+          # 2. Agar Docker installed nahi hai, toh install karein
+          if ! command -v docker &> /dev/null; then
+            echo "Installing Docker..."
+            sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+            curl -fsSL https://docker.com | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+            echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://docker.com $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+            sudo apt-get update -y
+            sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+            sudo usermod -aG docker ubuntu
+          fi
+
+          # 3. Agar Docker Compose (V2 plugin) installed nahi hai, toh install karein
+          if ! docker compose version &> /dev/null; then
+            echo "Installing Docker Compose Plugin..."
+            sudo apt-get install -y docker-compose-plugin
+          fi
+
+          # 4. Folder banayein aur code clone ya pull karein
+          mkdir -p ~/app
+          cd ~/app
+
+          if [ ! -d ".git" ]; then
+            echo "Cloning repository for the first time..."
+            git clone https://${{ secrets.GH_PAT }}@://github.com{{ github.repository }}.git .
+          else
+            echo "Pulling latest code changes..."
+            git pull origin main
+          fi
+
+          # 5. Purane chal rahe containers ko stop karein aur naye build karke run karein
+          echo "Building and launching containers..."
+          sudo docker compose down
+          sudo docker compose up -d --build
+
