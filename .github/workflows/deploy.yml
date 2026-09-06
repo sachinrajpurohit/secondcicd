@@ -21,23 +21,20 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: 22
         script: |
-          # 1. Poore folder ki permission user ko dilaao (Zaroori hai)
+          # 1. Sabse pehle poore folder ki permission 'ubuntu' user ko wapas dilayein (FETCH_HEAD fix)
           sudo chown -R $USER:$USER ${{ secrets.PROJECT_PATH }}
           
-          # 2. Git safe directory set karo
+          # 2. Git ko automatic batayein ki yeh directory safe hai
           git config --global --add safe.directory ${{ secrets.PROJECT_PATH }}
           
-          # 3. Project folder ke andar jao
+          # 3. Project folder ke andar jayein
           cd ${{ secrets.PROJECT_PATH }}
           
-          # 4. GitHub se sabse naya data fetch karo bina merge kiye
-          git fetch origin main
+          # 4. Git code pull karein (Ab permission issue nahi aayega)
+          git pull origin main
           
-          # 5. 🔥 Server par kiye gaye saare manual badlavo ko dho dalo aur GitHub wala code force apply karo
-          git reset --hard origin/main
-          
-          # 6. 💡 Sudo ke sath Docker Compose bina dash ke chalayein
+          # 5. 💡 Sudo ke sath naya Docker Compose bina dash ke chalayein
           sudo docker compose up --build -d
           
-          # 7. Sudo ke sath faltu cache images clean karein
+          # 6. Sudo ke sath unused images ko clean karein
           sudo docker image prune -f
