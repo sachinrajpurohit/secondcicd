@@ -37,10 +37,10 @@ jobs:
           # 3. Handle initial Git setup if directory is empty (Using GITHUB_TOKEN dynamically)
           if [ ! -d ".git" ]; then
             git init
-            git remote add origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/sachinrajpurohit/firstcicd.git
+            git remote add origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/sachinrajpurohit/secondcicd.git
           else
             # Remote URL ko update karein taaki har baar fresh temporary token use ho sake
-            git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/sachinrajpurohit/firstcicd.git
+            git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/sachinrajpurohit/secondcicd.git
           fi
 
           # 4. Fix Git safe directory configuration dynamically
